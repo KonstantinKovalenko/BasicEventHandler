@@ -1,12 +1,9 @@
 package eventhandler;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.*;
 
 public class Producer extends Thread implements Observable {
 
-    static Logger log = Logger.getLogger(Producer.class.getName());
     private static List<Observer> observerList = new ArrayList<>();
     private static volatile Queue<Event> eventQueue = new LinkedList<>();
 
@@ -29,19 +26,14 @@ public class Producer extends Thread implements Observable {
         notifyObservers();
     }
 
-    public long getQueueSize() {
-        return eventQueue.size();
-    }
-    public void finishThreads(){
-        
-    }
-
+    @Override
     public void run() {
         while (true) {
             if (!Thread.currentThread().isInterrupted()) {
                 fillQueue(eventQueue);
-                Thread.currentThread().yield();
+                Thread.yield();
             } else {
+                System.out.println("Producer shutted down");
                 return;
             }
         }

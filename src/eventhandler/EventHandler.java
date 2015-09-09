@@ -1,44 +1,50 @@
 package eventhandler;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.logging.*;
 
-public class EventHandler implements Observer,Runnable {
+public class EventHandler extends Thread implements Observer {
 
-    private long receivedCounter = 0;
+    private static Logger log = Logger.getLogger(EventHandler.class.getName());
     private long counter = 0;
     private volatile Queue<Event> eventQueue = new LinkedList<>();
-    private Producer producer;
-
-    EventHandler(Producer producer) {
-        this.producer = producer;
-        producer.addObserver(this);
-    }
 
     @Override
     public void update(Queue<Event> queue) {
         while (queue.peek() != null) {
             eventQueue.offer(queue.remove());
-            System.out.println("received event " + receivedCounter++);
         }
+    }
+
+    public int getQueueSize() {
+        return eventQueue.size();
     }
 
     @Override
     public void run() {
         try {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (true) {
                 if (eventQueue.peek() != null) {
                     eventQueue.remove().execute();
                     System.out.println("Event ended: " + counter++);
+                } else {
+                    try {
+                        TimeUnit.SECONDS.sleep(2);
+                        if (eventQueue.peek() == null) {
+                            break;
+                        }
+                    } catch (InterruptedException ie) {
+                        log.log(Level.SEVERE, "InterruptedException", ie);
+                    }
                 }
-                if (eventQueue.size() > 20000) {
-                    producer.removeObserver(this);
+                if (Thread.currentThread().isInterrupted()) {
                     System.out.println("Queue.size() is " + eventQueue.size() + ", EventHandler has stop");
                     System.out.println("Ending EventHandler's queue");
-                    return;
+                    break;
                 }
             }
         } finally {
-            System.err.println("Finally block");
             while (eventQueue.peek() != null) {
                 eventQueue.remove().execute();
                 System.out.println("Event ended: " + counter++);
