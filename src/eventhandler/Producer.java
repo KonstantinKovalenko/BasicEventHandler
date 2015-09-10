@@ -2,10 +2,9 @@ package eventhandler;
 
 import java.util.*;
 
-public class Producer extends Thread implements Observable {
+public class Producer extends Thread {
 
-    private static List<Observer> observerList = new ArrayList<>();
-    private static volatile Queue<Event> eventQueue = new LinkedList<>();
+    private static Queue<Event> eventQueue = new LinkedList<>();
 
     private Event throwNewEvent() {
         int randomInt = (int) (Math.random() * 3);
@@ -21,12 +20,14 @@ public class Producer extends Thread implements Observable {
         }
     }
 
-    private void fillQueue(Queue<Event> queue) {
-        queue.offer(throwNewEvent());
-        notifyObservers();
+    public Queue getQueue() {
+        return eventQueue;
     }
 
-    @Override
+    private void fillQueue(Queue<Event> queue) {
+        queue.offer(throwNewEvent());
+    }
+
     public void run() {
         while (true) {
             if (!Thread.currentThread().isInterrupted()) {
@@ -36,23 +37,6 @@ public class Producer extends Thread implements Observable {
                 System.out.println("Producer shutted down");
                 return;
             }
-        }
-    }
-
-    @Override
-    public void addObserver(Observer o) {
-        observerList.add(o);
-    }
-
-    @Override
-    public void removeObserver(Observer o) {
-        observerList.remove(o);
-    }
-
-    @Override
-    public void notifyObservers() {
-        for (Observer observer : observerList) {
-            observer.update(eventQueue);
         }
     }
 }
